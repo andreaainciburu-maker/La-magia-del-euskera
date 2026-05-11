@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Euskera — la magia de las palabras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,serif;background:#f5f4f0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+.wrap{width:100%;max-width:680px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:12px;font-family:system-ui,sans-serif;font-weight:500;margin-bottom:1.25rem}
+.badge.eu{background:#d1f0e4;color:#0a5c3a}
+.badge.es{background:#e8e6fc;color:#2d2480}
+.question{font-family:system-ui,sans-serif;font-size:0.95rem;color:#666;margin-bottom:0.4rem}
+.main-word{font-family:Georgia,serif;font-size:3.2rem;font-weight:700;color:#111;line-height:1.1;margin-bottom:0.5rem}
+.hint{font-family:system-ui,sans-serif;font-size:0.95rem;color:#888;margin-bottom:1.75rem}
+.btn-reveal{width:100%;padding:14px;border-radius:14px;border:1px solid #ccc;background:#fff;color:#111;font-family:system-ui,sans-serif;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;margin-bottom:0.75rem}
+.btn-reveal:hover{background:#f0efeb}
+.nav-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0.75rem}
+.btn-nav{padding:13px;border-radius:14px;border:1px solid #ccc;background:#fff;color:#111;font-family:system-ui,sans-serif;font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.15s}
+.btn-nav:hover{background:#f0efeb}
+.counter{text-align:center;font-family:system-ui,sans-serif;font-size:13px;color:#aaa;margin-top:1rem}
+.reveal-box{background:#eeecea;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:0.75rem}
+.revealed-word{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;color:#111;margin-bottom:0.75rem}
+.parts-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:1rem}
+.part-chip{padding:3px 10px;border-radius:6px;font-size:0.85rem;font-weight:600;font-family:system-ui,sans-serif}
+.part-chip.root{background:#c9c5f5;color:#1e1860}
+.part-chip.affix{background:#c9c5f5;color:#1e1860}
+.part-chip.uncertain{background:#fac97a;color:#3d1f00}
+.part-gloss{font-family:system-ui,sans-serif;font-size:0.85rem;color:#666}
+.part-sep{font-size:0.85rem;color:#bbb;margin:0 2px}
+.story{font-family:system-ui,sans-serif;font-size:0.95rem;color:#555;line-height:1.65;padding-top:0.75rem;border-top:1px solid #ddd}
+.uncertain-note{font-family:system-ui,sans-serif;font-size:0.85rem;color:#7a4500;background:#faeada;border-radius:8px;padding:0.6rem 0.9rem;margin-top:0.75rem;line-height:1.5}
+.family-section{margin-top:1rem}
+.family-label{font-family:system-ui,sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#aaa;margin-bottom:0.6rem}
+.family-chips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{padding:6px 14px;border-radius:20px;border:1px solid #ccc;background:#fff;font-family:system-ui,sans-serif;font-size:0.875rem;color:#555;cursor:default;transition:background 0.15s,border-color 0.15s}
+.fchip strong{color:#111;font-weight:600}
+.fchip.expandable{cursor:pointer}
+.fchip.expandable:hover{background:#e8e6fc;border-color:#9d98e8}
+.fchip.open{background:#e8e6fc;border-color:#9d98e8}
+.chip-expand{background:#fff;border:1px solid #d0cef5;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;width:100%}
+.chip-expand-word{font-family:Georgia,serif;font-size:1.2rem;font-weight:700;color:#111;margin-bottom:0.25rem}
+.chip-expand-meaning{font-family:system-ui,sans-serif;font-size:0.875rem;color:#666;margin-bottom:0.75rem}
+.chip-expand-parts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:0.75rem}
+.chip-expand-story{font-family:system-ui,sans-serif;font-size:0.875rem;color:#555;line-height:1.6;padding-top:0.6rem;border-top:1px solid #e8e6f8}
+.go-btn{display:inline-block;margin-top:0.75rem;padding:6px 14px;border-radius:20px;border:1px solid #9d98e8;background:transparent;color:#2d2480;font-family:system-ui,sans-serif;font-size:0.825rem;cursor:pointer;transition:background 0.15s}
+.go-btn:hover{background:#e8e6fc}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="badge-el"></div>
+  <div id="question-el" class="question"></div>
+  <div id="word-el" class="main-word"></div>
+  <div id="hint-el" class="hint"></div>
+  <div id="reveal-area"></div>
+  <div class="nav-row">
+    <button class="btn-nav" onclick="go(-1)">← Anterior</button>
+    <button class="btn-nav" onclick="go(1)">Siguiente →</button>
+  </div>
+  <div class="counter" id="counter-el"></div>
+</div>
+
+<script>
+const cards = [
+  {
+    id:"ilargia",
+    word:"ilargia", meaning:"la luna",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice en euskera?",
+    eu_h:"Intenta adivinar... ¿ves algo escondido dentro?", es_h:"Piensa en la luna y sus partes...",
+    parts:[{t:"(h)il",k:"root",g:"muerto / muerte"},{t:"argia",k:"root",g:"luz"}],
+    story:"La luna es la luz de los muertos — o la luz muerta. En la mitología vasca, la luna era conductora de las almas en su último viaje hacia el mundo subterráneo.",
+    uncertain:null,
+    family:[
+      {w:"argia",m:"la luz",expand:null},
+      {w:"ilargi betea",m:"luna llena",expand:null},
+      {w:"ilargi berria",m:"luna nueva",expand:null},
+      {w:"ilgora",m:"luna creciente",expand:null},
+      {w:"ilbehera",m:"luna menguante",expand:null}
+    ]
+  },
+  {
+    id:"sua",
+    word:"sua", meaning:"el fuego",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice en euskera?",
+    eu_h:"Una raíz corta que lo quema todo. ¿Qué construye?", es_h:"Piensa en fuego...",
+    parts:[{t:"su",k:"root",g:"fuego"}],
+    story:"Una sola raíz, su, y el euskera construye con ella la cocina, el volcán y el bombero. El fuego está en el centro de todo.",
+    uncertain:null,
+    family:[
+      {w:"sukaldea",m:"la cocina",expand:{id:"sukaldea"}},
+      {w:"sumendi",m:"el volcán",expand:{id:"sumendi"}},
+      {w:"suhiltzailea",m:"el/la bombero/a",expand:{id:"suhiltzailea"}}
+    ]
+  },
+  {
+    id:"sukaldea",
+    word:"sukaldea", meaning:"la cocina",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «cocina» en euskera?",
+    eu_h:"Dentro hay fuego... y un lugar.", es_h:"Piensa en el lugar donde está el fuego...",
+    parts:[{t:"su",k:"root",g:"fuego"},{t:"alde",k:"root",g:"lado / lugar junto a"}],
+    story:"La cocina es literalmente «el lado del fuego» — el lugar de la casa donde vivía la llama. Una definición que tiene miles de años de sentido.",
+    uncertain:null,
+    family:[
+      {w:"sua",m:"el fuego",expand:{id:"sua"}},
+      {w:"sumendi",m:"el volcán",expand:{id:"sumendi"}},
+      {w:"suhiltzailea",m:"el/la bombero/a",expand:{id:"suhiltzailea"}}
+    ]
+  },
+  {
+    id:"sumendi",
+    word:"sumendi", meaning:"el volcán",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «volcán» en euskera?",
+    eu_h:"Dos palabras simples forman algo poderoso. ¿Las ves?", es_h:"Una montaña, pero con fuego dentro...",
+    parts:[{t:"su",k:"root",g:"fuego"},{t:"mendi",k:"root",g:"monte / montaña"}],
+    story:"El volcán es la montaña de fuego. Sin más rodeos. El euskera nombra las cosas por lo que son.",
+    uncertain:null,
+    family:[
+      {w:"sua",m:"el fuego",expand:{id:"sua"}},
+      {w:"mendi",m:"el monte / la montaña",expand:null},
+      {w:"mendizalea",m:"el/la montañero/a",expand:null}
+    ]
+  },
+  {
+    id:"suhiltzailea",
+    word:"suhiltzailea", meaning:"el/la bombero/a",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «bombero» en euskera?",
+    eu_h:"Tres piezas cuentan exactamente lo que hace esta persona.", es_h:"Alguien que trabaja con el fuego... pero al revés.",
+    parts:[{t:"su",k:"root",g:"fuego"},{t:"hil",k:"root",g:"morir / matar"},{t:"-tzaile",k:"affix",g:"quien se ocupa de / profesión"}],
+    story:"El bombero es literalmente «la persona que hace morir el fuego». Tres piezas, una definición perfecta.",
+    uncertain:null,
+    family:[
+      {w:"sua",m:"el fuego",expand:{id:"sua"}},
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}},
+      {w:"saltzailea",m:"vendedor/a",expand:{id:"saltzailea"}},
+      {w:"zaintzailea",m:"cuidador/a",expand:{id:"zaintzailea"}}
+    ]
+  },
+  {
+    id:"harrijasotzailea",
+    word:"harrijasotzailea", meaning:"levantador/a de piedras",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se llama el levantador de piedras en euskera?",
+    eu_h:"Una palabra larga que describe un deporte muy antiguo. ¿Ves las tres piezas?", es_h:"Un deporte vasco, piedras, y alguien que las levanta...",
+    parts:[{t:"harri",k:"root",g:"piedra"},{t:"jaso",k:"root",g:"levantar / recoger"},{t:"-tzaile",k:"affix",g:"quien se ocupa de / profesión"}],
+    story:"El harrijasotzaile es el atleta de la herri kirolak — los deportes rurales vascos — que compite levantando grandes piedras. La palabra lo describe exactamente: la persona que levanta piedras.",
+    uncertain:null,
+    family:[
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}},
+      {w:"harria",m:"la piedra",expand:null},
+      {w:"suhiltzailea",m:"bombero/a",expand:{id:"suhiltzailea"}}
+    ]
+  },
+  {
+    id:"tzaile",
+    word:"-tzaile", meaning:"sufijo de profesión u oficio",
+    eu_q:"¿Qué hace este sufijo?", es_q:"¿Cómo se forma una profesión en euskera?",
+    eu_h:"Convierte verbos en personas. ¿Reconoces algún ejemplo?", es_h:"Piensa en cómo nombrar a quien hace algo...",
+    parts:[{t:"-tzaile",k:"affix",g:"quien hace / profesión"}],
+    story:"En euskera, las profesiones se construyen: tomas un verbo, añades -tzaile, y tienes a la persona que se dedica a eso. Es una llave que abre cientos de palabras.",
+    uncertain:null,
+    family:[
+      {w:"suhiltzailea",m:"bombero/a",expand:{id:"suhiltzailea"}},
+      {w:"harrijasotzailea",m:"levantador/a de piedras",expand:{id:"harrijasotzailea"}},
+      {w:"saltzailea",m:"vendedor/a",expand:{id:"saltzailea"}},
+      {w:"garbitzailea",m:"limpiador/a",expand:{id:"garbitzailea"}},
+      {w:"zaintzailea",m:"cuidador/a",expand:{id:"zaintzailea"}}
+    ]
+  },
+  {
+    id:"saltzailea",
+    word:"saltzailea", meaning:"el/la vendedor/a",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «vendedor» en euskera?",
+    eu_h:"¿Ves el verbo escondido dentro?", es_h:"Alguien que vende...",
+    parts:[{t:"sal(du)",k:"root",g:"vender"},{t:"-tzaile",k:"affix",g:"quien se ocupa de / profesión"},{t:"-a",k:"affix",g:"artículo determinado"}],
+    story:"Saldu es vender. Saltzaile es quien vende. El sufijo -tzaile hace el trabajo: convierte la acción en la persona.",
+    uncertain:null,
+    family:[
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}},
+      {w:"salgai",m:"en venta / a la venta",expand:{id:"salgai"}},
+      {w:"garbitzailea",m:"limpiador/a",expand:{id:"garbitzailea"}}
+    ]
+  },
+  {
+    id:"salgai",
+    word:"salgai", meaning:"en venta / a la venta",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «en venta» en euskera?",
+    eu_h:"Dos piezas: algo que se vende, y una que indica materia o cosa.", es_h:"Se ve en carteles de tiendas...",
+    parts:[{t:"sal(du)",k:"root",g:"vender"},{t:"gai",k:"root",g:"materia / cosa / apto para"}],
+    story:"Salgai significa literalmente «cosa para vender» o «apto para la venta». El sufijo -gai convierte una acción en aquello sobre lo que recae: la cosa vendible.",
+    uncertain:null,
+    family:[
+      {w:"saltzailea",m:"vendedor/a",expand:{id:"saltzailea"}},
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}}
+    ]
+  },
+  {
+    id:"garbitzailea",
+    word:"garbitzailea", meaning:"el/la limpiador/a",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «limpiador» en euskera?",
+    eu_h:"¿Qué adjetivo ves dentro?", es_h:"Alguien que limpia...",
+    parts:[{t:"garbi",k:"root",g:"limpio/a"},{t:"-tzaile",k:"affix",g:"quien se ocupa de / profesión"},{t:"-a",k:"affix",g:"artículo determinado"}],
+    story:"Garbi significa limpio. Garbitu es limpiar. Garbitzailea es quien limpia. El euskera construye la profesión desde el adjetivo, pasando por el verbo.",
+    uncertain:null,
+    family:[
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}},
+      {w:"garbi",m:"limpio/a",expand:null},
+      {w:"saltzailea",m:"vendedor/a",expand:{id:"saltzailea"}}
+    ]
+  },
+  {
+    id:"zaintzailea",
+    word:"zaintzailea", meaning:"el/la cuidador/a",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «cuidador» en euskera?",
+    eu_h:"¿Ves el verbo de cuidar dentro?", es_h:"Alguien que cuida...",
+    parts:[{t:"zain(du)",k:"root",g:"cuidar"},{t:"-tzaile",k:"affix",g:"quien se ocupa de / profesión"},{t:"-a",k:"affix",g:"artículo determinado"}],
+    story:"Zaindu es cuidar. Zaintzaile es quien cuida. Una de esas palabras que en euskera lleva dignidad incorporada en su estructura.",
+    uncertain:null,
+    family:[
+      {w:"-tzaile",m:"sufijo de profesión",expand:{id:"tzaile"}},
+      {w:"suhiltzailea",m:"bombero/a",expand:{id:"suhiltzailea"}},
+      {w:"garbitzailea",m:"limpiador/a",expand:{id:"garbitzailea"}}
+    ]
+  },
+  {
+    id:"eztabaida",
+    word:"eztabaida", meaning:"discusión / debate",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «discusión» en euskera?",
+    eu_h:"Dentro hay una conversación entera. ¿La ves?", es_h:"El sí y el no conviven en esta palabra...",
+    parts:[{t:"ez",k:"root",g:"no"},{t:"(e)ta",k:"affix",g:"y"},{t:"bai",k:"root",g:"sí"},{t:"da",k:"affix",g:"es (verbo ser)"}],
+    story:"Una discusión es el no y el sí conviviendo. La palabra lo lleva escrito: «es el sí y el no». Ambas partes, con sus razones.",
+    uncertain:null,
+    family:[]
+  },
+  {
+    id:"baimena",
+    word:"baimena", meaning:"el permiso",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «permiso» en euskera?",
+    eu_h:"¿Ves qué palabra pequeña se esconde al principio?", es_h:"Un permiso es, en el fondo, un sí...",
+    parts:[{t:"bai",k:"root",g:"sí"},{t:"-men-",k:"uncertain",g:"probablemente de eman (dar)"},{t:"-a",k:"affix",g:"artículo determinado"}],
+    story:"La palabra empieza con bai — el sí. Un permiso es, en el fondo, un sí. La raíz -men- probablemente viene de eman (dar): dar un sí.",
+    uncertain:"La conexión bai + eman (dar un sí) es la hipótesis más extendida, pero la etimología completa no está del todo cerrada.",
+    family:[
+      {w:"bai",m:"sí",expand:null},
+      {w:"baietz",m:"que sí / creo que sí",expand:null},
+      {w:"baimen eman",m:"dar permiso",expand:null}
+    ]
+  },
+  {
+    id:"muga",
+    word:"muga", meaning:"límite / frontera",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «frontera» en euskera?",
+    eu_h:"Una raíz simple que construye horizontes y destinos.", es_h:"Piensa en el borde de algo, donde termina...",
+    parts:[{t:"muga",k:"root",g:"límite / frontera"}],
+    story:"Muga es el borde, el lugar donde algo termina. Desde ese concepto simple, el euskera construye horizontes y metas.",
+    uncertain:null,
+    family:[
+      {w:"helmuga",m:"destino / meta",expand:{id:"helmuga"}},
+      {w:"ortzimuga",m:"horizonte",expand:{id:"ortzimuga"}}
+    ]
+  },
+  {
+    id:"helmuga",
+    word:"helmuga", meaning:"destino / meta",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «destino» en euskera?",
+    eu_h:"Dos piezas: llegar, y un límite. ¿Lo ves?", es_h:"El lugar al que llegas cuando termina el viaje...",
+    parts:[{t:"hel(du)",k:"root",g:"llegar"},{t:"muga",k:"root",g:"límite / frontera"}],
+    story:"El destino es «el límite al que llegas». Tu meta es el borde donde tu viaje termina. Pocas palabras describen tan bien lo que es llegar a algún sitio.",
+    uncertain:null,
+    family:[
+      {w:"muga",m:"límite / frontera",expand:{id:"muga"}},
+      {w:"ortzimuga",m:"horizonte",expand:{id:"ortzimuga"}}
+    ]
+  },
+  {
+    id:"ortzimuga",
+    word:"ortzimuga", meaning:"el horizonte",
+    eu_q:"¿Qué significa esta palabra?", es_q:"¿Cómo se dice «horizonte» en euskera?",
+    eu_h:"El cielo tiene un límite. ¿Dónde está?", es_h:"La línea donde el cielo se acaba...",
+    parts:[{t:"ortzi",k:"root",g:"cielo / firmamento"},{t:"muga",k:"root",g:"límite / frontera"}],
+    story:"El horizonte es «el límite del cielo» — la línea donde el firmamento se acaba. Una de esas palabras que, una vez que la entiendes, no puedes dejar de ver el horizonte de otra manera.",
+    uncertain:null,
+    family:[
+      {w:"muga",m:"límite / frontera",expand:{id:"muga"}},
+      {w:"helmuga",m:"destino / meta",expand:{id:"helmuga"}},
+      {w:"ortzi",m:"cielo / firmamento",expand:null}
+    ]
+  }
+];
+
+const cardMap = {};
+cards.forEach(c => cardMap[c.id] = c);
+
+let order = [], cur = 0, mode = 'eu';
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function partsHtml(parts){
+  return parts.map((p,i)=>{
+    const sep = i < parts.length-1 ? `<span class="part-sep">+</span>` : '';
+    return `<span class="part-chip ${p.k}">${p.t}</span><span class="part-gloss"> = ${p.g}</span>${sep}`;
+  }).join('');
+}
+
+function chipExpandHtml(fc){
+  const c = cardMap[fc.expand.id];
+  if(!c) return '';
+  return `<div class="chip-expand" id="expand-${fc.expand.id}">
+    <div class="chip-expand-word">${c.word}</div>
+    <div class="chip-expand-meaning">${c.meaning}</div>
+    <div class="chip-expand-parts">${partsHtml(c.parts)}</div>
+    <div class="chip-expand-story">${c.story}</div>
+    <button class="go-btn" onclick="jumpTo('${c.id}')">Ver tarjeta completa →</button>
+  </div>`;
+}
+
+function familyHtml(family){
+  if(!family.length) return '';
+  const chips = family.map(f => {
+    if(f.expand){
+      return `<button class="fchip expandable" onclick="toggleExpand(this,'${f.expand.id}')" data-id="${f.expand.id}"><strong>${f.w}</strong> — ${f.m} +</button>`;
+    }
+    return `<div class="fchip"><strong>${f.w}</strong> — ${f.m}</div>`;
+  }).join('');
+  return `<div class="family-section">
+    <div class="family-label">Familia de palabras</div>
+    <div class="family-chips" id="fchips-wrap">${chips}</div>
+    <div id="expand-zone"></div>
+  </div>`;
+}
+
+function toggleExpand(btn, id){
+  const zone = document.getElementById('expand-zone');
+  const isOpen = btn.classList.contains('open');
+  document.querySelectorAll('.fchip.expandable').forEach(b => {
+    b.classList.remove('open');
+    b.textContent = b.textContent.replace(' −',' +');
+  });
+  zone.innerHTML = '';
+  if(!isOpen){
+    btn.classList.add('open');
+    btn.textContent = btn.textContent.replace(' +',' −');
+    zone.innerHTML = chipExpandHtml({expand:{id}});
+  }
+}
+
+function jumpTo(id){
+  const idx = order.findIndex(i => cards[i].id === id);
+  if(idx !== -1){ cur = idx; render(); return; }
+  const globalIdx = cards.findIndex(c => c.id === id);
+  if(globalIdx !== -1){ order.unshift(globalIdx); cur = 0; render(); }
+}
+
+function render(){
+  const c = cards[order[cur]];
+  mode = Math.random() > 0.5 ? 'eu' : 'es';
+  const isEu = mode === 'eu';
+  document.getElementById('badge-el').innerHTML = `<span class="badge ${mode}">${isEu ? 'euskera → español' : 'español → euskera'}</span>`;
+  document.getElementById('question-el').textContent = isEu ? c.eu_q : c.es_q;
+  document.getElementById('word-el').textContent = isEu ? c.word : c.meaning;
+  document.getElementById('hint-el').textContent = isEu ? c.eu_h : c.es_h;
+  document.getElementById('counter-el').textContent = `${cur+1} de ${order.length}`;
+  document.getElementById('reveal-area').innerHTML = `<button class="btn-reveal" onclick="reveal()">👁 Ver respuesta</button>`;
+}
+
+function reveal(){
+  const c = cards[order[cur]];
+  const isEu = mode === 'eu';
+  const uncertain = c.uncertain ? `<div class="uncertain-note"><strong>Nota:</strong> ${c.uncertain}</div>` : '';
+  document.getElementById('reveal-area').innerHTML = `
+    <div class="reveal-box">
+      <div class="revealed-word">${isEu ? c.meaning : c.word}</div>
+      <div class="parts-row">${partsHtml(c.parts)}</div>
+      <div class="story">${c.story}</div>
+      ${uncertain}
+      ${familyHtml(c.family)}
+    </div>`;
+}
+
+function go(dir){
+  cur = (cur + dir + order.length) % order.length;
+  if(cur === 0 && dir === 1) order = shuffle(cards.map((_,i)=>i));
+  render();
+}
+
+function init(){
+  order = shuffle(cards.map((_,i)=>i));
+  cur = 0;
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
